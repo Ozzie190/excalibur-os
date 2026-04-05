@@ -62,9 +62,16 @@
     var maxSore = getMaxSoreness();
     components.soreness.score = Math.max(0, 100 - maxSore * 20);
 
-    // Muscle recovery — uses workout module if available
-    if (EXC.workout && EXC.workout.getMuscleRecovery) {
-      // Will be wired in Phase 3
+    // Muscle recovery — average recovery % of recently trained muscles
+    if (EXC.workout && EXC.workout.getMuscleRecovery && typeof MUSCLE_GROUPS !== 'undefined') {
+      var recoveryPcts = [];
+      Object.keys(MUSCLE_GROUPS).forEach(function(mid) {
+        var rec = EXC.workout.getMuscleRecovery(mid);
+        if (rec.pct < 100) recoveryPcts.push(rec.pct);
+      });
+      if (recoveryPcts.length > 0) {
+        components.recovery.score = Math.round(recoveryPcts.reduce(function(a,b){return a+b;},0) / recoveryPcts.length);
+      }
     }
 
     // Strain — recent workout RPE
@@ -83,6 +90,16 @@
     if (recentRPE.length) {
       var avgRPE = recentRPE.reduce(function(a,b){return a+b;},0) / recentRPE.length;
       components.strain.score = Math.max(0, 100 - Math.round(avgRPE * 10));
+    }
+
+    // Adherence — supplement + habit check-off rate from yesterday
+    if (EXC.supp && EXC.supp.getAllSupps) {
+      var supps = EXC.supp.getAllSupps();
+      var yesterday = addDays(date, -1);
+      if (supps.length > 0) {
+        var ydayChecked = supps.filter(function(s) { return !!EXC.S.supp.checks[s.id + '_' + yesterday]; }).length;
+        components.adherence.score = Math.round((ydayChecked / supps.length) * 100);
+      }
     }
 
     // Practice bonus
