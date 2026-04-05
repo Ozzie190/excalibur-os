@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0a0f"/>
+  <g transform="translate(256,256)">
+    <!-- Barbell -->
+    <rect x="-160" y="-12" width="320" height="24" rx="12" fill="#1a1a2e"/>
+    <!-- Left plate -->
+    <rect x="-180" y="-60" width="40" height="120" rx="8" fill="#00b4d8"/>
+    <rect x="-180" y="-60" width="40" height="120" rx="8" fill="url(#g1)" opacity=".3"/>
+    <!-- Right plate -->
+    <rect x="140" y="-60" width="40" height="120" rx="8" fill="#00b4d8"/>
+    <rect x="140" y="-60" width="40" height="120" rx="8" fill="url(#g1)" opacity=".3"/>
+    <!-- Left small plate -->
+    <rect x="-200" y="-40" width="20" height="80" rx="4" fill="#4cc9f0"/>
+    <!-- Right small plate -->
+    <rect x="180" y="-40" width="20" height="80" rx="4" fill="#4cc9f0"/>
+    <!-- Center grip marks -->
+    <rect x="-30" y="-14" width="4" height="28" rx="2" fill="#333"/>
+    <rect x="-15" y="-14" width="4" height="28" rx="2" fill="#333"/>
+    <rect x="11" y="-14" width="4" height="28" rx="2" fill="#333"/>
+    <rect x="26" y="-14" width="4" height="28" rx="2" fill="#333"/>
+    <!-- Pulse dot -->
+    <circle cx="0" cy="90" r="6" fill="#00b4d8">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset="100%" stop-color="#000" stop-opacity=".2"/>
+    </linearGradient>
+  </defs>
+</svg>

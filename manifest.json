@@ -1,0 +1,17 @@
+{
+  "name": "Excalibur OS",
+  "short_name": "Excalibur",
+  "description": "Unified Health Intelligence Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Dashboard", "url": "/?section=dashboard", "description": "Readiness & overview" },
+    { "name": "Supplements", "url": "/?section=supplements", "description": "Supplement protocol" },
+    { "name": "Train", "url": "/?section=workout", "description": "Start a workout" }
+  ]
+}

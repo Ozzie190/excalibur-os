@@ -1,0 +1,19 @@
+{
+  "name": "Biohack OS",
+  "short_name": "Biohack",
+  "description": "Advanced supplement protocol tracker with research-backed data, phase timelines, and cycle management.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00b4d8",
+  "categories": ["health", "fitness", "medical"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Today's Protocol", "short_name": "Today", "url": "/", "description": "Check and log today's supplements" },
+    { "name": "Log Symptom", "short_name": "Log", "url": "/?tab=log", "description": "Log a symptom or note" }
+  ]
+}
