@@ -109,6 +109,12 @@ EXC.closeModal = function() {
   EXC.load();
   computeToday();
 
+  // Migrate: enable MgT second dose by default (from biohack-os)
+  if (!EXC.S.supp.secondDose) EXC.S.supp.secondDose = {};
+  if (!EXC.S.supp.secondDoseTiming) EXC.S.supp.secondDoseTiming = {};
+  if (EXC.S.supp.secondDose['mgt'] === undefined) { EXC.S.supp.secondDose['mgt'] = true; EXC.save(); }
+  if (!EXC.S.supp.secondDoseTiming['mgt']) { EXC.S.supp.secondDoseTiming['mgt'] = 'bedtime'; EXC.save(); }
+
   // Handle ?section= deep links
   var p = new URLSearchParams(location.search);
   if (p.get('section')) EXC.S.section = p.get('section');
