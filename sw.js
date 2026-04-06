@@ -5,7 +5,7 @@ var CACHED = [
   '/css/core.css', '/css/modules.css',
   '/js/utils.js', '/js/events.js', '/js/state.js', '/js/router.js',
   '/js/data/supplement-db.js', '/js/data/supplement-builtin.js',
-  '/js/data/exercise-db.js', '/js/data/practice-db.js', '/js/data/cross-rules.js',
+  '/js/data/exercise-db.js', '/js/data/practice-db.js', '/js/data/cross-rules.js', '/js/data/science-rules.js',
   '/js/modules/recovery.js', '/js/modules/supplements.js', '/js/modules/workout.js',
   '/js/modules/habits.js', '/js/modules/practice.js', '/js/modules/wearable.js',
   '/js/modules/dashboard.js', '/js/modules/insights.js',
