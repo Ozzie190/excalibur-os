@@ -36,6 +36,7 @@ EXC.S = {
     expanded: null,
     expandedAlert: null,
     expandedCycle: null,
+    calVis: {},
     subTab: 'schedule'
   },
 
@@ -180,10 +181,37 @@ EXC.importData = function() {
     reader.onload = function(ev) {
       try {
         var data = JSON.parse(ev.target.result);
-        deepMerge(EXC.S, data);
+
+        if (data.supp && data.workout) {
+          // Excalibur OS native format
+          deepMerge(EXC.S, data);
+          showToast('Excalibur backup restored');
+        } else if (data.checks !== undefined || data.gymDays !== undefined || data.startDates !== undefined) {
+          // Biohack OS (bhv6) format
+          var suppKeys = ['gymDays','startDates','checks','notes','doseOverrides','dismissed',
+                          'customSupps','removedBuiltin','schedTimes','symptomLogs','lifetimeDays',
+                          'supply','notifEnabled','skips','doseHistory','doseTimes','secondDose',
+                          'secondDoseTiming','logMode'];
+          suppKeys.forEach(function(k) { if (data[k] !== undefined) EXC.S.supp[k] = data[k]; });
+          if (data.wakeTime) EXC.S.wakeTime = data.wakeTime;
+          if (data.bedTime) EXC.S.bedTime = data.bedTime;
+          if (data.gymTime) EXC.S.supp.gymTime = data.gymTime;
+          showToast('Biohack OS data imported');
+        } else if (data.workoutHistory !== undefined && !data.supp) {
+          // Iron Protocol (ip_v1) format
+          var workKeys = ['activeWorkout','workoutHistory','templates','prs','bodyWeight',
+                          'measurements','sorenessLog','units','defaultRestSeconds',
+                          'vibrateOnTimerEnd','autoStartTimer','selectedGoal'];
+          workKeys.forEach(function(k) { if (data[k] !== undefined) EXC.S.workout[k] = data[k]; });
+          showToast('Iron Protocol data imported');
+        } else {
+          // Unknown format — best-effort merge
+          deepMerge(EXC.S, data);
+          showToast('Data imported');
+        }
+
         EXC.save();
         EXC.draw();
-        showToast('Data imported successfully');
       } catch(err) { showToast('Import failed: invalid file'); }
     };
     reader.readAsText(file);

@@ -326,6 +326,53 @@ function skipDay(id, ds) {
 }
 function isSkipped(id, ds) { return !!S.skips[id+'_'+(ds||TODAY)]; }
 
+// ── Auto-skip unchecked past supplements ──
+var _autoSkipRanForDate = null;
+function autoSkipPastDays() {
+  if (_autoSkipRanForDate === TODAY) return;
+  _autoSkipRanForDate = TODAY;
+  var supps = getAllSupps();
+  var changed = false;
+  for (var i = 1; i <= 7; i++) {
+    var ds = addDays(TODAY, -i);
+    supps.forEach(function(sup) {
+      var sd = S.startDates[sup.id];
+      if (!sd || ds < sd) return; // not yet started on that date
+      var key = sup.id + '_' + ds;
+      if (S.checks[key] || S.skips[key]) return; // already handled
+      // Skip if off-cycle
+      if (sup.hasCycle) {
+        var cs = cycleStatus(sup, sd);
+        if (cs && !cs.on) return; // was in rest phase
+      }
+      S.skips[key] = true;
+      changed = true;
+    });
+  }
+  if (changed) saveS();
+}
+
+// ── Second dose + calendar helpers (safe for onclick in innerHTML) ──
+function addSecondDose(id) {
+  S.secondDose[id] = true;
+  if (!S.secondDoseTiming[id]) S.secondDoseTiming[id] = 'bedtime';
+  saveS(); draw();
+}
+function removeSecondDose(id) {
+  S.secondDose[id] = false;
+  S.expanded = null;
+  saveS(); draw();
+}
+function setSecondDoseTiming(id, val) {
+  S.secondDoseTiming[id] = val;
+  saveS(); draw();
+}
+function toggleCalVis(id) {
+  if (!S.calVis) S.calVis = {};
+  S.calVis[id] = !S.calVis[id];
+  draw();
+}
+
 function checkDoseTiming(id) {
   var now = new Date();
   var nowMins = now.getHours()*60 + now.getMinutes();
@@ -926,10 +973,10 @@ function renderSecondDoseCard(s) {
   if (open2) {
     h += '<div class="panel" style="border-color:'+s.color+'33">';
     h += '<div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Timing Block</div>';
-    h += '<select onchange="S.secondDoseTiming[\''+s.id+'\']=this.value;saveS();draw()" onclick="event.stopPropagation()" style="width:100%;background:#111;border:1px solid #222;border-radius:6px;padding:6px 8px;color:#ccc;font-size:11px;margin-bottom:10px">';
+    h += '<select onchange="setSecondDoseTiming(\''+s.id+'\',this.value)" onclick="event.stopPropagation()" style="width:100%;background:#111;border:1px solid #222;border-radius:6px;padding:6px 8px;color:#ccc;font-size:11px;margin-bottom:10px">';
     DEFAULT_BLOCKS.forEach(function(blk2) { h += '<option value="'+blk2.id+'"'+(t2===blk2.id?' selected':'')+'>'+blk2.label+'</option>'; });
     h += '</select>';
-    h += '<button onclick="S.secondDose[\''+s.id+'\']=false;S.expanded=null;saveS();draw()" style="width:100%;padding:8px;border-radius:7px;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);color:#ff6b35;font-size:11px;cursor:pointer">Remove 2nd Dose</button>';
+    h += '<button onclick="event.stopPropagation();removeSecondDose(\''+s.id+'\')" style="width:100%;padding:8px;border-radius:7px;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);color:#ff6b35;font-size:11px;cursor:pointer">Remove 2nd Dose</button>';
     h += '</div>';
   }
   h += '</div>';
@@ -1139,13 +1186,13 @@ function suppCard(s, blkId) {
     h += '<div onclick="event.stopPropagation()" style="background:#0d0d1a;border:1px solid #1a1a2e;border-radius:8px;padding:9px 11px;margin-bottom:9px">';
     h += '<div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Second Dose</div>';
     if (!_has2nd) {
-      h += '<button onclick="event.stopPropagation();S.secondDose[\''+s.id+'\']=true;if(!S.secondDoseTiming[\''+s.id+'\'])S.secondDoseTiming[\''+s.id+'\']=\'bedtime\';saveS();draw()" style="width:100%;padding:7px;border-radius:6px;background:#111;border:1px solid #2a2a2e;color:#555;font-size:11px;cursor:pointer">+ Add Second Dose</button>';
+      h += '<button onclick="event.stopPropagation();addSecondDose(\''+s.id+'\')" style="width:100%;padding:7px;border-radius:6px;background:#111;border:1px solid #2a2a2e;color:#555;font-size:11px;cursor:pointer">+ Add Second Dose</button>';
     } else {
       h += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">';
-      h += '<select onchange="event.stopPropagation();S.secondDoseTiming[\''+s.id+'\']=this.value;saveS();draw()" onclick="event.stopPropagation()" style="flex:1;background:#111;border:1px solid #222;border-radius:6px;padding:5px 8px;color:#ccc;font-size:10px">';
+      h += '<select onchange="event.stopPropagation();setSecondDoseTiming(\''+s.id+'\',this.value)" onclick="event.stopPropagation()" style="flex:1;background:#111;border:1px solid #222;border-radius:6px;padding:5px 8px;color:#ccc;font-size:10px">';
       DEFAULT_BLOCKS.forEach(function(blk2) { h += '<option value="'+blk2.id+'"'+(_t2nd===blk2.id?' selected':'')+'>'+blk2.label+'</option>'; });
       h += '</select>';
-      h += '<button onclick="event.stopPropagation();S.secondDose[\''+s.id+'\']=false;S.expanded=null;saveS();draw()" style="padding:5px 10px;border-radius:6px;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);color:#ff6b35;font-size:10px;cursor:pointer;white-space:nowrap">Remove</button>';
+      h += '<button onclick="event.stopPropagation();removeSecondDose(\''+s.id+'\')" style="padding:5px 10px;border-radius:6px;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);color:#ff6b35;font-size:10px;cursor:pointer;white-space:nowrap">Remove</button>';
       h += '</div>';
     }
     h += '</div>';
@@ -1153,10 +1200,11 @@ function suppCard(s, blkId) {
     h += '<button onclick="event.stopPropagation();confirmRemove(\''+s.id+'\')" style="width:100%;padding:7px;border-radius:7px;background:rgba(255,107,53,.05);border:1px solid rgba(255,107,53,.15);color:#ff6b35;font-size:10px;cursor:pointer;margin-bottom:9px">🗑 Remove from Protocol</button>';
 
     // ── Adherence Calendar ───────────────────────────────────────
-    var calOpen = !!(_calOffset[s.id] !== undefined || window['_calVis_'+s.id]);
-    h += '<button onclick="event.stopPropagation();window[\'_calVis_'+s.id+'\']=!window[\'_calVis_'+s.id+'\'];draw()" style="width:100%;background:#0d0d1a;border:1px solid #1a1a2e;border-radius:7px;padding:7px 10px;color:#777;font-size:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:9px">';
-    h += '<span>📅 Dose History &amp; Adherence</span><span style="font-size:12px">'+(window['_calVis_'+s.id]?'▲':'▼')+'</span></button>';
-    if (window['_calVis_'+s.id]) {
+    if (!S.calVis) S.calVis = {};
+    var calOpen = !!(S.calVis[s.id] || _calOffset[s.id] !== undefined);
+    h += '<button onclick="event.stopPropagation();toggleCalVis(\''+s.id+'\')" style="width:100%;background:#0d0d1a;border:1px solid #1a1a2e;border-radius:7px;padding:7px 10px;color:#777;font-size:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:9px">';
+    h += '<span>📅 Dose History &amp; Adherence</span><span style="font-size:12px">'+(S.calVis[s.id]?'▲':'▼')+'</span></button>';
+    if (S.calVis[s.id]) {
       h += renderSuppCalendar(s.id, s);
     }
 
@@ -2247,7 +2295,7 @@ EXC.register('supplements', {
   get subTab() { return S.subTab || 'schedule'; },
   set subTab(v) { S.subTab = v; },
   render: suppRender,
-  afterRender: function() { scheduleNotifications(); }
+  afterRender: function() { autoSkipPastDays(); scheduleNotifications(); }
 });
 
 // ── Expose public API for cross-module access ──
@@ -2272,7 +2320,9 @@ var fns = [
   'showOCRConfirm','confirmOCRSave','setLogMode',
   'addSymptomLog','delSymptomLog','addNoteInCard','updateSymptomCrossRef',
   'calNav','togglePastCheck','moveSuppTiming','setDoseFromMainInput',
-  'renderSecondDoseCard'
+  'renderSecondDoseCard',
+  'addSecondDose','removeSecondDose','setSecondDoseTiming','toggleCalVis',
+  'draw','saveS'
 ];
 fns.forEach(function(name) {
   try { var fn = eval(name); if (typeof fn === 'function') window[name] = fn; } catch(e) {}
