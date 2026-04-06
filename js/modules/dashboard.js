@@ -117,6 +117,51 @@
     return h;
   }
 
+  function renderMuscleRecovery() {
+    if (!EXC.workout || !EXC.workout.getMuscleRecovery) return '';
+    if (typeof MUSCLE_GROUPS === 'undefined') return '';
+
+    var fatigued = [];
+    Object.keys(MUSCLE_GROUPS).forEach(function(mid) {
+      var rec = EXC.workout.getMuscleRecovery(mid);
+      if (rec.pct < 100) {
+        fatigued.push({ id: mid, name: MUSCLE_GROUPS[mid].name, pct: rec.pct, color: rec.color });
+      }
+    });
+    if (fatigued.length === 0) return '';
+
+    fatigued.sort(function(a, b) { return a.pct - b.pct; });
+
+    var h = '<div style="margin-bottom:12px">';
+    h += '<div style="font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">';
+    h += '\uD83D\uDCAA Muscle Recovery</div>';
+    h += '<div class="card" style="cursor:default">';
+
+    fatigued.forEach(function(m) {
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+      h += '<span style="font-size:10px;color:#888;width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + m.name + '</span>';
+      h += '<div style="flex:1;height:5px;background:#111;border-radius:3px;overflow:hidden">';
+      h += '<div style="height:5px;width:' + m.pct + '%;background:' + m.color + ';border-radius:3px;transition:width .3s"></div></div>';
+      h += '<span style="font-size:9px;color:' + m.color + ';width:30px;text-align:right">' + m.pct + '%</span>';
+      h += '</div>';
+    });
+
+    // Ready to train
+    var fresh = [];
+    Object.keys(MUSCLE_GROUPS).forEach(function(mid) {
+      var rec = EXC.workout.getMuscleRecovery(mid);
+      if (rec.pct >= 100) fresh.push(MUSCLE_GROUPS[mid].name);
+    });
+    if (fresh.length > 0 && fresh.length <= 14) {
+      h += '<div style="font-size:9px;color:#38b000;margin-top:8px">\u2705 Ready: ' + fresh.slice(0, 6).join(', ');
+      if (fresh.length > 6) h += ' +' + (fresh.length - 6) + ' more';
+      h += '</div>';
+    }
+
+    h += '</div></div>';
+    return h;
+  }
+
   function renderWeeklyScorecard() {
     var h = '<div style="margin-bottom:12px">';
     h += '<div style="font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">';
@@ -175,6 +220,7 @@
       var h = '<div class="sec sIn">';
       h += renderReadinessHero();
       h += renderRightNow();
+      h += renderMuscleRecovery();
       h += renderIntelCards();
       h += renderWeeklyScorecard();
       h += '</div>';

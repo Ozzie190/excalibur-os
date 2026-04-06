@@ -252,6 +252,17 @@ function getSmartWeight(exerciseId, setIndex, repTarget) {
     return { weight:roundWeight(baseWeight * 0.85), reps:baseReps, reason:'deload' };
   }
 
+  // 1.5. System readiness check (sleep, HRV, strain, adherence)
+  if (EXC.recovery && EXC.recovery.getScore) {
+    var _readiness = EXC.recovery.getScore();
+    if (_readiness && _readiness.overall < 40) {
+      return { weight:roundWeight(baseWeight * 0.85), reps:baseReps, reason:'low_readiness' };
+    }
+    if (_readiness && _readiness.overall < 55) {
+      return { weight:roundWeight(baseWeight * 0.9), reps:baseReps, reason:'moderate_readiness' };
+    }
+  }
+
   // 2. RPE analysis — if avg RPE ≥ 9 last session, too heavy; if trending up at same weight, fatigue
   var rpeHistory = getExerciseRPEHistory(exerciseId);
   if (rpeHistory.length > 0) {
@@ -306,6 +317,11 @@ function getSmartWeight(exerciseId, setIndex, repTarget) {
   var targetReps = completedWorking.length > 0 ? completedWorking[0].reps : baseReps;
   var allHitTarget = completedWorking.length > 0 && completedWorking.every(function(s){ return s.reps >= targetReps; });
   if (allCompleted && allHitTarget) {
+    // Supercompensation: double increment when fully recovered
+    var _r = (EXC.recovery && EXC.recovery.getScore) ? EXC.recovery.getScore() : null;
+    if (_r && _r.overall > 85) {
+      return { weight:baseWeight + increment * 2, reps:baseReps, reason:'super_progress' };
+    }
     return { weight:baseWeight + increment, reps:baseReps, reason:'progress' };
   }
 
@@ -757,6 +773,28 @@ function renderWorkout() {
 
 function renderWorkoutStart() {
   var h = '<div class="sec sIn">';
+
+  // ── Readiness banner ──────────────────────────────────────
+  if (EXC.recovery && EXC.recovery.getScore) {
+    var _rs = EXC.recovery.getScore();
+    if (_rs && _rs.overall < 40) {
+      h += '<div style="background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.3);border-radius:10px;padding:10px 12px;margin-bottom:12px">';
+      h += '<div style="font-size:11px;color:#ff4444;font-weight:600">\u26A0 Recovery Mode \u2014 Readiness '+_rs.overall+'</div>';
+      h += '<div style="font-size:10px;color:#aa3333;margin-top:3px">Weights auto-reduced 15%. Consider mobility or light session today.</div>';
+      h += '</div>';
+    } else if (_rs && _rs.overall < 55) {
+      h += '<div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:10px;padding:10px 12px;margin-bottom:12px">';
+      h += '<div style="font-size:11px;color:#ffd60a;font-weight:600">\u26A0 Moderate Readiness \u2014 Score '+_rs.overall+'</div>';
+      h += '<div style="font-size:10px;color:#aa9500;margin-top:3px">Weights reduced 10%. Listen to your body today.</div>';
+      h += '</div>';
+    } else if (_rs && _rs.overall > 85) {
+      h += '<div style="background:rgba(56,176,0,.06);border:1px solid rgba(56,176,0,.25);border-radius:10px;padding:10px 12px;margin-bottom:12px">';
+      h += '<div style="font-size:11px;color:#38b000;font-weight:600">\uD83D\uDE80 Peak Readiness \u2014 Score '+_rs.overall+'</div>';
+      h += '<div style="font-size:10px;color:#2a8800;margin-top:3px">Full recovery. Push for PRs \u2014 double weight increments active.</div>';
+      h += '</div>';
+    }
+  }
+
   var todaysTemplates = getTodaysTemplates();
   var dayName = DAY_NAMES[new Date().getDay()];
 
@@ -996,8 +1034,8 @@ function renderActiveWorkout() {
       h += '</div>';
       // Smart weight adjustment label
       if (set.suggestion && !set.completed && set.suggestion !== 'same' && set.suggestion !== 'first_session' && set.suggestion !== 'no_data') {
-        var sugLabels = {progress:'\u2191 +'+( S.units==='kg'?'2.5':'5')+S.units, deload:'\u26A0 deload \u221215%', high_soreness:'\u26A0 sore \u221210%', low_recovery:'\u26A0 recovering \u221210%', moderate_soreness:'\u2014 hold (sore)', rpe_overload:'\u26A0 RPE too high \u221210%', rpe_high:'\u2014 hold (RPE \u22659)', rpe_fatigue_trend:'\u26A0 fatigue trend \u221210%', estimated:'\uD83C\uDFAF based on bodyweight'};
-        var sugColors = {progress:'#38b000', deload:'#ff6b35', high_soreness:'#ff6b35', low_recovery:'#ffd60a', moderate_soreness:'#ffd60a', rpe_overload:'#e63946', rpe_high:'#ffd60a', rpe_fatigue_trend:'#ff6b35', estimated:'#9d4edd'};
+        var sugLabels = {progress:'\u2191 +'+( S.units==='kg'?'2.5':'5')+S.units, super_progress:'\uD83D\uDE80 peak recovery \u2191\u2191 +'+( S.units==='kg'?'5':'10')+S.units, deload:'\u26A0 deload \u221215%', low_readiness:'\u26A0 low readiness \u221215%', moderate_readiness:'\u26A0 mod readiness \u221210%', high_soreness:'\u26A0 sore \u221210%', low_recovery:'\u26A0 recovering \u221210%', moderate_soreness:'\u2014 hold (sore)', rpe_overload:'\u26A0 RPE too high \u221210%', rpe_high:'\u2014 hold (RPE \u22659)', rpe_fatigue_trend:'\u26A0 fatigue trend \u221210%', estimated:'\uD83C\uDFAF based on bodyweight'};
+        var sugColors = {progress:'#38b000', super_progress:'#38b000', deload:'#ff6b35', low_readiness:'#ff4444', moderate_readiness:'#ffd60a', high_soreness:'#ff6b35', low_recovery:'#ffd60a', moderate_soreness:'#ffd60a', rpe_overload:'#e63946', rpe_high:'#ffd60a', rpe_fatigue_trend:'#ff6b35', estimated:'#9d4edd'};
         var lbl = sugLabels[set.suggestion] || set.suggestion;
         var clr = sugColors[set.suggestion] || '#555';
         h += '<div style="font-size:8px;color:'+clr+';padding:0 0 1px 22px;margin-top:-3px;font-weight:600">'+lbl+'</div>';
@@ -1537,8 +1575,12 @@ function renderAddExerciseModalBody() {
 
   // Muscle filter chips
   var muscleFilters = [
-    {id:'chest_mid',label:'Chest'},{id:'back_lats',label:'Back'},{id:'front_delts',label:'Shoulders'},
-    {id:'quads',label:'Quads'},{id:'hamstrings',label:'Hams'},{id:'biceps',label:'Arms'},{id:'core',label:'Core'}
+    {id:'chest_mid',label:'Chest'},{id:'chest_upper',label:'Upper Chest'},{id:'chest_lower',label:'Lower Chest'},
+    {id:'back_lats',label:'Lats'},{id:'back_upper',label:'Upper Back'},{id:'back_traps',label:'Traps'},{id:'back_erector',label:'Erectors'},
+    {id:'front_delts',label:'Front Delts'},{id:'side_delts',label:'Side Delts'},{id:'rear_delts',label:'Rear Delts'},
+    {id:'biceps',label:'Biceps'},{id:'triceps',label:'Triceps'},
+    {id:'quads',label:'Quads'},{id:'hamstrings',label:'Hams'},{id:'glutes',label:'Glutes'},{id:'calves',label:'Calves'},
+    {id:'core',label:'Core'},{id:'forearms',label:'Forearms'}
   ];
   h += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">';
   h += '<span onclick="_modalFilterMuscle=\'\';updateAddExerciseModal()" style="font-size:9px;padding:3px 8px;border-radius:10px;cursor:pointer;border:1px solid '+(!_modalFilterMuscle?'#00b4d8':'#1a1a2e')+';color:'+(!_modalFilterMuscle?'#00b4d8':'#555')+';background:'+(!_modalFilterMuscle?'#00b4d811':'transparent')+'">All</span>';
@@ -1558,11 +1600,6 @@ function renderAddExerciseModalBody() {
     if (_modalFilterMuscle) {
       var hitsMuscle = ex.musclesPrimary.some(function(m){ return m.muscle === _modalFilterMuscle; }) ||
                        ex.musclesSecondary.some(function(m){ return m.muscle === _modalFilterMuscle; });
-      // Arms filter: match biceps OR triceps
-      if (_modalFilterMuscle === 'biceps') {
-        hitsMuscle = hitsMuscle || ex.musclesPrimary.some(function(m){ return m.muscle === 'triceps'; }) ||
-                     ex.musclesSecondary.some(function(m){ return m.muscle === 'triceps'; });
-      }
       if (!hitsMuscle) return false;
     }
     return true;
@@ -1839,6 +1876,28 @@ function getRecommendedExercises(limit) {
       });
     }
   }
+
+  // Pass 4: Recovery penalty — penalize exercises targeting fatigued muscles
+  EXERCISE_DB.forEach(function(ex) {
+    if (inWorkout[ex.id] || !scores[ex.id]) return;
+    var maxFatigue = 0;
+    var fatiguedName = '';
+    ex.musclesPrimary.forEach(function(m) {
+      var rec = getMuscleRecovery(m.muscle);
+      if (rec.pct < 50) {
+        var fatigue = 100 - rec.pct;
+        if (fatigue > maxFatigue) {
+          maxFatigue = fatigue;
+          var mg = MUSCLE_GROUPS[m.muscle];
+          fatiguedName = mg ? mg.name : m.muscle;
+        }
+      }
+    });
+    if (maxFatigue > 0) {
+      scores[ex.id].score -= Math.round(maxFatigue / 20); // -1 to -5 penalty
+      scores[ex.id].reasons.push(fatiguedName + ' recovering');
+    }
+  });
 
   // Sort and return top results
   var results = [];
