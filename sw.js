@@ -1,5 +1,5 @@
 // Excalibur OS — Service Worker
-var CACHE = 'excalibur-v4';
+var CACHE = 'excalibur-v5';
 var CACHED = [
   '/', '/index.html', '/manifest.json', '/icon.svg',
   '/css/core.css', '/css/modules.css',

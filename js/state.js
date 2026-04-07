@@ -81,9 +81,11 @@ EXC.S = {
   wearable: {
     circularToken: null,
     googleFitToken: null,
+    googleFitClientId: null,
     sleepData: [],
     activityData: [],
-    lastSync: null
+    lastSync: null,
+    subTab: 'log'
   },
 
   // ── Recovery cache ──
@@ -196,13 +198,25 @@ EXC.importData = function() {
           // Excalibur OS native format
           deepMerge(EXC.S, data);
           showToast('Excalibur backup restored');
-        } else if (data.checks !== undefined || data.gymDays !== undefined || data.startDates !== undefined) {
-          // Biohack OS (bhv6) format
+        } else if (data.appName === 'Biohack OS' || (data.state && (data.state.checks !== undefined || data.state.gymDays !== undefined))) {
+          // Biohack OS v3 export format (keys nested in data.state)
+          var st = data.state || data;
           var suppKeys = ['gymDays','startDates','checks','notes','doseOverrides','dismissed',
                           'customSupps','removedBuiltin','schedTimes','symptomLogs','lifetimeDays',
                           'supply','notifEnabled','skips','doseHistory','doseTimes','secondDose',
                           'secondDoseTiming','logMode'];
-          suppKeys.forEach(function(k) { if (data[k] !== undefined) EXC.S.supp[k] = data[k]; });
+          suppKeys.forEach(function(k) { if (st[k] !== undefined) EXC.S.supp[k] = st[k]; });
+          if (st.wakeTime) EXC.S.wakeTime = st.wakeTime;
+          if (st.bedTime) EXC.S.bedTime = st.bedTime;
+          if (st.gymTime) EXC.S.supp.gymTime = st.gymTime;
+          showToast('Biohack OS data imported');
+        } else if (data.checks !== undefined || data.gymDays !== undefined || data.startDates !== undefined) {
+          // Biohack OS raw/legacy format (keys at top level)
+          var suppKeys2 = ['gymDays','startDates','checks','notes','doseOverrides','dismissed',
+                          'customSupps','removedBuiltin','schedTimes','symptomLogs','lifetimeDays',
+                          'supply','notifEnabled','skips','doseHistory','doseTimes','secondDose',
+                          'secondDoseTiming','logMode'];
+          suppKeys2.forEach(function(k) { if (data[k] !== undefined) EXC.S.supp[k] = data[k]; });
           if (data.wakeTime) EXC.S.wakeTime = data.wakeTime;
           if (data.bedTime) EXC.S.bedTime = data.bedTime;
           if (data.gymTime) EXC.S.supp.gymTime = data.gymTime;
