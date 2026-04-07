@@ -90,6 +90,16 @@ EXC.S = {
   recovery: {
     dailyScores: {},
     recommendations: {}
+  },
+
+  // ── AI Coach ──
+  aiCoach: {
+    provider: 'minimax',
+    apiKey: '',
+    autoAdjust: false,
+    lastResponse: null,
+    lastFetchTs: 0,
+    history: []
   }
 };
 

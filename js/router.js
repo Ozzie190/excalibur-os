@@ -84,6 +84,7 @@ function updateBottomNav(activeSection) {
 EXC.openSettings = function() {
   var root = document.getElementById('modal-root');
   if (!root) return;
+  var ac = EXC.S.aiCoach || {};
   root.innerHTML = '<div class="modal-bg" onclick="EXC.closeModal()">' +
     '<div class="modal" onclick="event.stopPropagation()">' +
     '<div class="modal-hdr"><span style="font-family:\'Space Grotesk\',sans-serif;font-size:16px;font-weight:700;color:#f0f0ff">Settings</span>' +
@@ -92,6 +93,20 @@ EXC.openSettings = function() {
     '<input type="time" class="finput" value="' + EXC.S.wakeTime + '" onchange="EXC.S.wakeTime=this.value;EXC.save();">' +
     '<div class="flabel">Bed Time</div>' +
     '<input type="time" class="finput" value="' + EXC.S.bedTime + '" onchange="EXC.S.bedTime=this.value;EXC.save();">' +
+    '<div style="margin-top:14px;border-top:1px solid #1a1a2e;padding-top:12px">' +
+    '<div style="font-size:9px;color:#00b4d8;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">AI Coach</div>' +
+    '<div class="flabel">Provider</div>' +
+    '<select class="finput" id="set_ai_provider" onchange="EXC.S.aiCoach.provider=this.value;EXC.save();">' +
+    '<option value="minimax"' + (ac.provider === 'minimax' ? ' selected' : '') + '>MiniMax</option>' +
+    '<option value="claude"' + (ac.provider === 'claude' ? ' selected' : '') + '>Claude</option>' +
+    '<option value="openai"' + (ac.provider === 'openai' ? ' selected' : '') + '>OpenAI</option>' +
+    '</select>' +
+    '<div class="flabel">API Key</div>' +
+    '<input type="password" class="finput" id="set_ai_key" value="' + (ac.apiKey || '') + '" placeholder="Enter API key" onchange="EXC.S.aiCoach.apiKey=this.value;EXC.save();">' +
+    '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">' +
+    '<label style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px;cursor:pointer">' +
+    '<input type="checkbox" ' + (ac.autoAdjust ? 'checked' : '') + ' onchange="EXC.S.aiCoach.autoAdjust=this.checked;EXC.save();"> Auto-adjust workouts/supps</label>' +
+    '</div></div>' +
     '<div style="margin-top:12px"><button class="btn-sec" onclick="EXC.exportData()">Export All Data</button></div>' +
     '<div><button class="btn-sec" onclick="EXC.importData()">Import Data</button></div>' +
     '<div style="margin-top:16px;text-align:center;font-size:9px;color:#333">Excalibur OS v1.0</div>' +
