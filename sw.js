@@ -1,5 +1,5 @@
 // Excalibur OS — Service Worker
-var CACHE = 'excalibur-v3';
+var CACHE = 'excalibur-v4';
 var CACHED = [
   '/', '/index.html', '/manifest.json', '/icon.svg',
   '/css/core.css', '/css/modules.css',
@@ -7,7 +7,7 @@ var CACHED = [
   '/js/data/supplement-db.js', '/js/data/supplement-builtin.js',
   '/js/data/exercise-db.js', '/js/data/practice-db.js', '/js/data/cross-rules.js', '/js/data/science-rules.js',
   '/js/modules/recovery.js', '/js/modules/supplements.js', '/js/modules/workout.js',
-  '/js/modules/habits.js', '/js/modules/practice.js', '/js/modules/wearable.js',
+  '/js/modules/habits.js', '/js/modules/practice.js', '/js/modules/wearable.js', '/js/modules/ai-coach.js',
   '/js/modules/dashboard.js', '/js/modules/insights.js',
   '/js/workers/rest-timer.js'
 ];

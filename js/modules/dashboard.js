@@ -222,9 +222,24 @@
       h += renderRightNow();
       h += renderMuscleRecovery();
       h += renderIntelCards();
+      // AI Coach card
+      if (EXC.aiCoach && EXC.aiCoach.renderCoachCard) {
+        h += EXC.aiCoach.renderCoachCard();
+      }
       h += renderWeeklyScorecard();
       h += '</div>';
       return h;
+    },
+    afterRender: function() {
+      // Auto-fetch coaching if cache expired (async, re-draws when done)
+      if (EXC.aiCoach && EXC.aiCoach.fetchCoaching) {
+        var ac = EXC.S.aiCoach || {};
+        if (ac.apiKey && (!ac.lastFetchTs || (Date.now() - ac.lastFetchTs) > 4 * 3600000)) {
+          EXC.aiCoach.fetchCoaching().then(function(result) {
+            if (result && EXC.S.section === 'dashboard') EXC.draw();
+          });
+        }
+      }
     }
   });
 
